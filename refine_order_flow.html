@@ -421,7 +421,10 @@
     /* tbody tr.row-state-red { background: var(--row-bg-red); } */
     /* tbody tr.row-state-yellow { background: var(--row-bg-yellow); } */
     /* tbody tr.row-state-blue { background: var(--row-bg-blue); } */
-    tbody tr.row-state-green { background: var(--row-bg-green); }
+    tbody tr.row-state-green {
+      background: var(--row-bg-green);
+    }
+
     tbody td {
       padding: 13px 16px;
       vertical-align: middle;
@@ -548,29 +551,6 @@
       vertical-align: middle;
     }
 
-    .sla-bar-wrapper {
-      width: 60px;
-      height: 4px;
-      background: var(--border2);
-      border-radius: 2px;
-      margin-top: 4px;
-      overflow: hidden;
-    }
-
-    .sla-bar-fill {
-      height: 100%;
-      border-radius: 2px;
-      background: var(--blue);
-      transition: width 0.3s;
-    }
-
-    .sla-bar-fill.warning {
-      background: var(--yellow);
-    }
-
-    .sla-bar-fill.critical {
-      background: var(--red);
-    }
 
     .state-age {
       font-family: var(--font-mono);
@@ -915,15 +895,53 @@
       border-radius: 0 4px 4px 0;
     }
 
-    .tl-group-wrapper { display: flex; flex-direction: column; }
-    .tl-group-toggle { display: flex; gap: 14px; cursor: pointer; }
-    .tl-group-toggle .tl-content { padding-bottom: 20px; flex: 1; margin-top: 0; }
-    .tl-group-toggle .tl-event { font-size: 13px; font-weight: 500; transition: color 0.2s; color: var(--text-mute); }
-    .tl-group-toggle:hover .tl-event { color: var(--text); }
-    .tl-group-content { display: none; }
-    .tl-group-content.expanded { display: block; }
-    .tl-group-toggle.expanded .expand-icon { transform: rotate(180deg); }
-    .expand-icon { display: inline-block; transition: transform 0.2s; font-size: 10px; margin-left: 4px; }
+    .tl-group-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tl-group-toggle {
+      display: flex;
+      gap: 14px;
+      cursor: pointer;
+    }
+
+    .tl-group-toggle .tl-content {
+      padding-bottom: 20px;
+      flex: 1;
+      margin-top: 0;
+    }
+
+    .tl-group-toggle .tl-event {
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.2s;
+      color: var(--text-mute);
+    }
+
+    .tl-group-toggle:hover .tl-event {
+      color: var(--text);
+    }
+
+    .tl-group-content {
+      display: none;
+    }
+
+    .tl-group-content.expanded {
+      display: block;
+    }
+
+    .tl-group-toggle.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .expand-icon {
+      display: inline-block;
+      transition: transform 0.2s;
+      font-size: 10px;
+      margin-left: 4px;
+    }
+
     .tl-dot.group-dot {
       background: var(--green);
       border-color: var(--green);
@@ -931,7 +949,10 @@
       font-size: 8px;
       font-weight: bold;
     }
-    .tl-dot.group-dot::after { content: none !important; }
+
+    .tl-dot.group-dot::after {
+      content: none !important;
+    }
 
     .action-btns {
       display: flex;
@@ -2214,9 +2235,6 @@
           }
 
           const stuckHtml = (o.updatedMins > 30 && o.stateClass !== 'green') ? `<span class="stuck-timer">⏱ ${o.updatedMins}m</span>` : '';
-          const slaM = o.priority === 'urgent' ? 60 : o.priority === 'high' ? 120 : 240;
-          const consumed = Math.min(o.updatedMins, slaM); const pct = (consumed / slaM) * 100;
-          let slaBar = ''; if (pct > 90) slaBar = 'critical'; else if (pct > 60) slaBar = 'warning';
 
           const checked = selectedCheckboxes.has(o.id) ? 'checked' : '';
           const checkHtml = `<input type="checkbox" ${checked} onclick="event.stopPropagation(); window.toggleCheckbox('${o.id}', this.checked)" />`;
@@ -2226,8 +2244,6 @@
           <td><span class="priority-indicator"></span><div class="patient-name">${o.patient} ${o.alert ? '<span style="color:var(--red);font-size:12px;margin-left:4px;">●</span>' : ''}</div><div class="visit-id">${o.id}</div></td>
           <td>
             <span class="state-badge ${stateClass(o.state)}"><span class="state-dot" style="display:inline-block; margin-right:4px; vertical-align:middle;"></span>${o.state}</span>${stuckHtml}
-            <div class="sla-bar-wrapper"><div class="sla-bar-fill ${slaBar}" style="width:${pct}%;"></div></div>
-            <span class="state-age live-age" data-ts="${o.lastUpdateTs}">${o.updatedMins}m</span>
           </td>
           <td class="tech-cell">${o.tech}</td>
           <td class="time-cell">${new Date(o.createdTs).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
