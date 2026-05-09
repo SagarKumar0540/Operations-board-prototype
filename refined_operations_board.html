@@ -41,6 +41,9 @@
       --gray: #6e7582;
       --gray-bg: #f2f3f4;
 
+      --orange: #f59f00;
+      --orange-bg: #fef5e6;
+
       --accent: #206bc4;
       --font-mono: 'JetBrains Mono', monospace;
       --font-sans: 'Inter', sans-serif;
@@ -429,6 +432,31 @@
       border-left: 4px solid var(--yellow);
     }
 
+    tbody tr.is-stale {
+      background: var(--orange-bg);
+      border-left: 4px solid var(--orange);
+    }
+
+    .stale-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      background: var(--orange-bg);
+      border: 1px solid var(--orange);
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--orange);
+      margin-left: 6px;
+      font-weight: 600;
+    }
+
+    .updated-cell.stale {
+      color: var(--orange);
+      font-weight: 600;
+    }
+
     tbody td {
       padding: 13px 16px;
       vertical-align: middle;
@@ -452,10 +480,11 @@
 
     .visit-id {
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-mute);
       margin-top: 1px;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     .state-badge {
@@ -1806,6 +1835,7 @@
         <span class="filter-label">View</span>
         <button class="filter-btn active" onclick="setFilter(this,'all')">All Orders</button>
         <button class="filter-btn" onclick="setFilter(this,'delayed')">Delayed</button>
+        <button class="filter-btn" onclick="setFilter(this,'stale')">Stale</button>
         <button class="filter-btn" onclick="setFilter(this,'today')">Today</button>
         <button class="filter-btn" id="tech-filter-btn" onclick="toggleTechDropdown(event)">Technician</button>
         <div class="filter-sep"></div>
@@ -2092,6 +2122,17 @@
             { event: 'Imaging Completed', time: '8:45 AM', status: 'done', reason: 'All views captured and quality checked.' },
             { event: 'Completed', time: '8:50 AM', status: 'done', reason: 'Final report signed off; visit marked successful.' }
           ]
+        },
+        {
+          id: 'VIS-0005', patient: 'Robert Wilson', state: 'Technician Assigned', stateClass: 'blue', tech: 'Tom K.', window: 'Morning', updated: '9:00 AM', updatedMins: 90, alert: false, priority: 'normal', notes: 'Patient requires extra assistance.', lastUpdateTs: now - 90 * 60 * 1000, createdTs: todayTimestamp + 6 * 3600000, timeline: [
+            { event: 'Order Received', time: '6:00 AM', status: 'done', reason: 'Routine order.' },
+            { event: 'Order Under Review', time: '6:10 AM', status: 'done' },
+            { event: 'Order Complete', time: '6:15 AM', status: 'done' },
+            { event: 'Insurance Verified', time: '6:30 AM', status: 'done' },
+            { event: 'Patient Contacted', time: '7:00 AM', status: 'done' },
+            { event: 'Scheduled', time: '7:30 AM', status: 'done' },
+            { event: 'Technician Assigned', time: '9:00 AM', status: 'active', reason: 'Assigned to Tom K. No movement since assignment.' }
+          ]
         }
       ];
 
@@ -2103,6 +2144,8 @@
         { name: 'Tom K.', load: 2 },
         { name: 'John S.', load: 1 }
       ];
+
+      const STALE_THRESHOLD = 60; // Minutes
 
       let selectedId = null;
       let currentFilter = 'all';
@@ -2124,7 +2167,11 @@
 
       function updateStats() {
         const filtered = getFilteredOrders();
-        const attention = filtered.filter(o => o.priority === 'urgent' || (o.updatedMins > 30 && o.stateClass !== 'green')).length;
+        const attention = filtered.filter(o => 
+          o.priority === 'urgent' || 
+          (o.updatedMins > 30 && o.stateClass !== 'green') ||
+          (o.updatedMins >= STALE_THRESHOLD && o.stateClass !== 'green')
+        ).length;
         const active = filtered.filter(o => ['blue', 'yellow'].includes(o.stateClass)).length;
         
         const urgentEl = document.getElementById('stat-urgent');
@@ -2145,6 +2192,8 @@
         let filtered = orders;
         if (currentFilter === 'delayed') {
           filtered = filtered.filter(o => o.updatedMins > 30 && o.stateClass !== 'green');
+        } else if (currentFilter === 'stale') {
+          filtered = filtered.filter(o => o.updatedMins >= STALE_THRESHOLD && o.stateClass !== 'green');
         } else if (currentFilter === 'technician' && currentTechFilter) {
           filtered = filtered.filter(o => o.tech === currentTechFilter);
         } else if (currentFilter === 'today') {
@@ -2232,7 +2281,11 @@
             tr.classList.add(`row-state-${o.stateClass}`);
           }
 
+          const isStale = o.updatedMins >= STALE_THRESHOLD && o.stateClass !== 'green';
+          if (isStale) tr.classList.add('is-stale');
+
           const stuckHtml = (o.updatedMins > 30 && o.stateClass !== 'green') ? `<span class="stuck-timer">⏱ ${o.updatedMins}m</span>` : '';
+          const staleHtml = isStale ? `<span class="stale-indicator">⏳ STALE</span>` : '';
 
           const checked = selectedCheckboxes.has(o.id) ? 'checked' : '';
           const checkHtml = `<input type="checkbox" ${checked} onclick="event.stopPropagation(); window.toggleCheckbox('${o.id}', this.checked)" />`;
@@ -2241,11 +2294,11 @@
           <td class="col-checkbox">${checkHtml}</td>
           <td><span class="priority-indicator"></span><div class="patient-name">${o.patient}</div><div class="visit-id">${o.id}</div></td>
           <td>
-            <span class="state-badge ${stateClass(o.state)}"><span class="state-dot"></span>${o.state}</span>${stuckHtml}
+            <span class="state-badge ${stateClass(o.state)}"><span class="state-dot"></span>${o.state}</span>${stuckHtml}${staleHtml}
           </td>
           <td class="tech-cell">${o.tech}</td>
           <td class="time-cell">${new Date(o.createdTs).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-          <td class="updated-cell"><span class="rel-time" data-ts="${o.lastUpdateTs}">${o.updated}</span></td>
+          <td class="updated-cell ${isStale ? 'stale' : ''}"><span class="rel-time" data-ts="${o.lastUpdateTs}">${o.updated}</span></td>
         `;
           tr.onclick = (e) => { if (e.target.tagName === 'INPUT') return; openDetail(o.id); };
           tbody.appendChild(tr);
@@ -2355,7 +2408,7 @@
                   <div class="tl-group-wrapper">
                     <div class="tl-group-toggle" onclick="this.nextElementSibling.classList.toggle('expanded'); this.classList.toggle('expanded')">
                       <div class="tl-left"><div class="tl-dot group-dot">${doneGroup.length}</div><div class="tl-line done-line"></div></div>
-                      <div class="tl-content"><div class="tl-event done">Completed Steps <span class="expand-icon">▼</span></div></div>
+                      <div class="tl-content"><div class="tl-event done">${doneGroup[0].t.event} & ${doneGroup.length - 1} more steps <span class="expand-icon">▼</span></div></div>
                     </div>
                     <div class="tl-group-content">${groupHtml}</div>
                   </div>
@@ -2385,10 +2438,22 @@
         const nextSteps = [];
         if (o.stateClass === 'gray') nextSteps.push('Assign technician');
         if (o.stateClass === 'blue' && o.updatedMins > 5) nextSteps.push('Check technician location');
+        if (o.updatedMins >= STALE_THRESHOLD && o.stateClass !== 'green') nextSteps.push('Escalate due to staleness');
         if (o.stateClass === 'yellow') nextSteps.push('Prepare for departure');
         if (o.stateClass === 'red') nextSteps.push('Escalate to supervisor');
         if (o.stateClass === 'green') nextSteps.push('Archive order');
         if (nextSteps.length === 0) nextSteps.push('Monitor progress');
+
+        const isStaleDetail = o.updatedMins >= STALE_THRESHOLD && o.stateClass !== 'green';
+        const stalenessWarning = isStaleDetail ? `
+          <div style="background:var(--orange-bg); border:1px solid var(--orange); padding:10px; border-radius:4px; margin-bottom:12px; display:flex; gap:10px; align-items:center;">
+            <div style="font-size:20px;">⏳</div>
+            <div>
+              <div style="font-weight:600; color:var(--orange); font-size:12px; text-transform:uppercase;">Information Staleness Risk</div>
+              <div style="font-size:11px; color:var(--text-dim);">No update for ${o.updatedMins}m. High operational uncertainty. Recommend contacting technician.</div>
+            </div>
+          </div>
+        ` : '';
 
         let recommendedAction = '';
         let otherActions = '';
@@ -2433,9 +2498,8 @@
         `;
 
         body.innerHTML = `
-        <div class="detail-section"><div class="section-header" onclick="toggleDetailSection(this)"><span class="section-label">Actions</span><span class="section-toggle">▼</span></div><div class="section-content">${actionsHtml}</div></div>
-        <!-- <div class="detail-section"><div class="section-header" onclick="toggleDetailSection(this)"><span class="section-label">Health Summary</span><span class="section-toggle">▼</span></div><div class="section-content"><span class="risk-badge risk-${riskLevel}" style="margin-bottom:8px;">${riskIcon} ${riskLevel.toUpperCase()} RISK</span><div class="sla-indicator ${slaClass}"><div><div class="sla-label">SLA Remaining</div><div class="sla-value">${slaRemaining}m (${slaPercent}%)</div></div></div><div class="quick-stats"><div class="quick-stat"><div class="quick-stat-label">Progress</div><div class="quick-stat-value">${completionPercent}%</div></div><div class="quick-stat"><div class="quick-stat-label">Steps Left</div><div class="quick-stat-value">${remainingSteps}</div></div></div></div></div> -->
-        <div class="detail-section"><div class="section-header" onclick="toggleDetailSection(this)"><span class="section-label">Patient & Assignment</span><span class="section-toggle collapsed">▼</span></div><div class="section-content collapsed"><div class="detail-grid"><div class="detail-field"><label>Patient</label><div class="val">${o.patient}</div></div><div class="detail-field"><label>Visit ID</label><div class="val mono">${o.id}</div></div><div class="detail-field"><label>Technician</label><div class="val">${o.tech}</div></div><div class="detail-field"><label>Time Window</label><div class="val">${o.window}</div></div><div class="detail-field"><label>Priority</label><div class="val" style="text-transform:uppercase;color:${o.priority === 'urgent' ? 'var(--red)' : o.priority === 'high' ? 'var(--yellow)' : 'var(--text)'}">${o.priority}</div></div><div class="detail-field"><label>Current State</label><div class="val"><span class="state-badge ${stateClass(o.state)}" style="font-size:10px"><span class="state-dot"></span>${o.state}</span></div></div><div class="detail-field"><label>Last Updated</label><div class="val mono rel-time" data-ts="${o.lastUpdateTs}">${o.updated}</div></div><div class="detail-field"><label>Time in State</label><div class="val mono live-age" data-ts="${o.lastUpdateTs}">${o.updatedMins}m</div></div></div></div></div>
+        <div class="detail-section"><div class="section-header" onclick="toggleDetailSection(this)"><span class="section-label">Actions</span><span class="section-toggle">▼</span></div><div class="section-content">${stalenessWarning}${actionsHtml}</div></div>
+        <div class="detail-section"><div class="section-header" onclick="toggleDetailSection(this)"><span class="section-label">Patient & Assignment</span><span class="section-toggle collapsed">▼</span></div><div class="section-content collapsed"><div class="detail-grid"><div class="detail-field"><label>Patient</label><div class="val">${o.patient}</div></div><div class="detail-field"><label>Visit ID</label><div class="val mono">${o.id}</div></div><div class="detail-field"><label>Technician</label><div class="val">${o.tech}</div></div><div class="detail-field"><label>Time Window</label><div class="val">${o.window}</div></div><div class="detail-field"><label>Priority</label><div class="val" style="text-transform:uppercase;color:${o.priority === 'urgent' ? 'var(--red)' : o.priority === 'high' ? 'var(--yellow)' : 'var(--text)'}">${o.priority}</div></div><div class="detail-field"><label>Current State</label><div class="val"><span class="state-badge ${stateClass(o.state)}" style="font-size:10px"><span class="state-dot"></span>${o.state}</span></div></div><div class="detail-field"><label>Last Updated</label><div class="val mono rel-time ${isStaleDetail ? 'stale' : ''}" data-ts="${o.lastUpdateTs}">${o.updated}</div></div><div class="detail-field"><label>Time in State</label><div class="val mono live-age ${isStaleDetail ? 'stale' : ''}" data-ts="${o.lastUpdateTs}">${o.updatedMins}m</div></div></div></div></div>
         <div class="detail-section"><div class="section-header" onclick="toggleDetailSection(this)"><span class="section-label">Location & ETA</span><span class="section-toggle collapsed">▼</span></div><div class="section-content collapsed"><div class="location-preview"><div class="location-address">📍 123 Main St, Unit 2<br/>New York, NY 10001</div><div class="location-distance">Distance: ${distance}km | ETA: ${eta}min</div><button class="location-map-btn">📍 View Map</button></div></div></div>
         <div class="detail-section"><div class="section-header" onclick="toggleDetailSection(this)"><span class="section-label">Timeline</span><span class="section-toggle">▼</span></div><div class="section-content"><div class="timeline">${tlHtml}</div></div></div>
         ${o.notes ? `<div class="detail-section"><div class="section-header" onclick="toggleDetailSection(this)"><span class="section-label">Notes</span><span class="section-toggle collapsed">▼</span></div><div class="section-content collapsed"><div class="note-box">${o.notes}</div></div></div>` : ''}
