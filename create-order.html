@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zaren – Create New Order</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #ffffff; --surface: #f8f9fa; --surface2: #e9ecef; --border: #dee2e6; --border2: #ced4da;
+      --text: #212529; --text-dim: #495057; --text-mute: #6c757d;
+      --green: #198754; --green-bg: #d1e7dd; --blue: #0d6efd; --blue-bg: #cfe2ff; --red: #dc3545; --red-bg: #f8d7da;
+      --accent: #0d6efd; --font-mono: 'JetBrains Mono', monospace; --font-sans: 'Inter', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 48px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .logo { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.2em; color: var(--text); text-transform: uppercase; text-decoration: none; }
+    .logo span { color: var(--accent); }
+    .back-link { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--text-mute); text-decoration: none; display: flex; align-items: center; gap: 4px; transition: color 0.2s; }
+    .back-link:hover { color: var(--accent); }
+    
+    .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; padding-bottom: 80px; }
+    
+    .stepper-container { position: sticky; top: 0; z-index: 1000; margin-bottom: 40px; background: #fff; padding: 24px; border-bottom: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .stepper { display: flex; justify-content: space-between; align-items: flex-start; position: relative; gap: 20px; max-width: 1000px; margin: 0 auto; }
+    .stepper::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 2px; background: var(--border); z-index: 1; }
+    
+    .step { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; flex: 1; }
+    .step-circle { width: 32px; height: 32px; border-radius: 50%; background: #fff; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; font-weight: 600; margin-bottom: 12px; transition: all 0.3s; color: var(--text-mute); }
+    .step-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-mute); transition: color 0.3s; margin-bottom: 4px; }
+    .step-title { font-size: 12px; font-weight: 400; color: var(--text-dim); transition: color 0.3s; }
+
+    .step.active .step-circle { border-color: var(--blue); background: var(--blue); color: #fff; box-shadow: 0 0 0 4px var(--blue-bg); }
+    .step.active .step-label { color: var(--blue); }
+    .step.active .step-title { color: var(--text); }
+
+    .step.complete .step-circle { border-color: var(--green); background: var(--green); color: #fff; }
+    .step.complete .step-label { color: var(--green); }
+    .step.complete .step-title { color: var(--green); }
+    
+    /* Progress Line logic */
+    .step.complete::after { content: ''; position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background: var(--green); z-index: -1; }
+    .step:last-child.complete::after { display: none; }
+
+    .page-header { margin-bottom: 32px; }
+    .page-title { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+    .page-subtitle { color: var(--text-mute); margin-top: 4px; }
+
+    .form-section { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 32px; margin-bottom: 24px; scroll-margin-top: 120px; }
+    .section-title { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-mute); margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .section-title span { background: var(--blue-bg); color: var(--blue); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 10px; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border2); border-radius: 6px; font-size: 14px; font-family: var(--font-sans); transition: border-color 0.2s; outline: none; }
+    .form-control:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.05); }
+    
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; }
+    .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; user-select: none; }
+    .checkbox-item input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--blue); }
+
+    .procedure-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .procedure-category { margin-bottom: 24px; }
+    .category-label { font-weight: 600; font-size: 13px; margin-bottom: 12px; color: var(--text); border-left: 3px solid var(--blue); padding-left: 8px; }
+    .procedure-list { display: flex; flex-direction: column; gap: 8px; }
+    .procedure-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; padding: 4px 0; }
+    .procedure-info { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .laterality { display: flex; gap: 4px; }
+    .laterality-btn { width: 22px; height: 22px; border: 1px solid var(--border2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .laterality-btn:hover { background: var(--surface); }
+    .laterality-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+    .upload-area { border: 2px dashed var(--border2); border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface); }
+    .upload-area:hover { border-color: var(--blue); background: var(--blue-bg); }
+    .upload-icon { font-size: 32px; margin-bottom: 12px; }
+    .upload-text { font-weight: 500; margin-bottom: 4px; }
+    .upload-hint { font-size: 12px; color: var(--text-mute); }
+
+    .form-actions { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border); padding: 16px 40px; display: flex; justify-content: flex-end; gap: 16px; box-shadow: 0 -4px 12px rgba(0,0,0,0.05); z-index: 100; }
+    .btn { padding: 12px 24px; border-radius: 24px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; transition: all 0.2s; border: none; }
+    .btn-secondary { background: var(--surface2); color: var(--text-dim); }
+    .btn-secondary:hover { background: var(--border2); }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #0056b3; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #212529; color: #fff; padding: 12px 24px; border-radius: 4px; font-size: 13px; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 900px) {
+      .container { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .page-header { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="refined_operations_board.html" class="logo">ZAREN<span>BOARD</span></a>
+      <div style="width: 1px; height: 20px; background: var(--border2);"></div>
+      <a href="refined_operations_board.html" class="back-link">← Back to Board</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <header class="page-header">
+      <h1 class="page-title">New Operational Order</h1>
+      <p class="page-subtitle">Fill out the detailed imaging request form below.</p>
+    </header>
+
+    <div class="stepper-container">
+      <div class="stepper">
+        <div class="step" id="step-1" onclick="scrollToSection('section-1')">
+          <div class="step-circle">1</div>
+          <div class="step-label">Step 01</div>
+          <div class="step-title">Patient Info</div>
+        </div>
+        <div class="step" id="step-2" onclick="scrollToSection('section-2')">
+          <div class="step-circle">2</div>
+          <div class="step-label">Step 02</div>
+          <div class="step-title">Facility Details</div>
+        </div>
+        <div class="step" id="step-3" onclick="scrollToSection('section-3')">
+          <div class="step-circle">3</div>
+          <div class="step-label">Step 03</div>
+          <div class="step-title">Billing & Insurance</div>
+        </div>
+        <div class="step" id="step-4" onclick="scrollToSection('section-4')">
+          <div class="step-circle">4</div>
+          <div class="step-label">Step 04</div>
+          <div class="step-title">Exam Details</div>
+        </div>
+        <div class="step" id="step-5" onclick="scrollToSection('section-5')">
+          <div class="step-circle">5</div>
+          <div class="step-label">Step 05</div>
+          <div class="step-title">Procedures</div>
+        </div>
+        <div class="step" id="step-6" onclick="scrollToSection('section-6')">
+          <div class="step-circle">6</div>
+          <div class="step-label">Step 06</div>
+          <div class="step-title">Documentation</div>
+        </div>
+      </div>
+    </div>
+
+    <form id="order-form" onsubmit="event.preventDefault(); submitOrder();">
+      <!-- Section 1: Patient Information -->
+      <div class="form-section" id="section-1" data-step="1">
+        <h2 class="section-title"><span>1</span> Patient Information</h2>
+        <div class="grid">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="patient_name" class="form-control" required placeholder="John Doe">
+          </div>
+          <div class="form-group">
+            <label>Date of Birth *</label>
+            <input type="date" id="dob" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="tel" id="patient_phone" class="form-control" required placeholder="(623) 257-1399">
+          </div>
+          <div class="form-group">
+            <label>Address / Facility Name</label>
+            <input type="text" id="patient_address" class="form-control" placeholder="123 Care St or Facility Name">
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label>City, State, Zip</label>
+            <input type="text" id="city_state_zip" class="form-control" placeholder="Phoenix, AZ 85001">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Facility & Ordering Info -->
+      <div class="form-section" id="section-2" data-step="2">
+        <h2 class="section-title"><span>2</span> Facility & Ordering Physician</h2>
+        <div class="grid">
+          <div class="form-group">
+            <label>Facility / Client Name</label>
+            <input type="text" id="client_name" class="form-control" placeholder="e.g. Allied Mobile Imaging">
+          </div>
+          <div class="form-group">
+            <label>Ordering Physician</label>
+            <input type="text" id="ordering_physician" class="form-control" placeholder="Dr. Smith">
+          </div>
+          <div class="form-group">
+            <label>Ordering Contact</label>
+            <input type="text" id="ordering_contact" class="form-control" placeholder="Nurse Jane">
+          </div>
+          <div class="form-group">
+            <label>Fax Report to Doctor at</label>
+            <input type="tel" id="fax_report" class="form-control" placeholder="(623) 257-2133">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Billing & Insurance -->
+      <div class="form-section" id="section-3" data-step="3">
+        <h2 class="section-title"><span>3</span> Billing & Insurance</h2>
+        <div class="form-group">
+          <label>Billing Preference</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item"><input type="radio" name="billing" value="facility"> Bill Facility</label>
+            <label class="checkbox-item"><input type="radio" name="billing" value="insurance"> Bill Insurance (Face-Sheet attached)</label>
+          </div>
+        </div>
+        <div class="grid grid-3">
+          <div class="form-group">
+            <label>Medicare #</label>
+            <input type="text" id="medicare" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Medicaid #</label>
+            <input type="text" id="medicaid" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Insurance ID #</label>
+            <input type="text" id="insurance_id" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Responsible Party Name/Address/Phone</label>
+          <input type="text" id="responsible_info" class="form-control">
+        </div>
+      </div>
+
+      <!-- Section 4: Exam Details -->
+      <div class="form-section" id="section-4" data-step="4">
+        <h2 class="section-title"><span>4</span> Exam Details</h2>
+        <div class="grid">
+          <div class="form-group">
+            <label>Reason for Portable Exam (Required by CMS)</label>
+            <input type="text" id="exam_reason" class="form-control" placeholder="e.g. Non-ambulatory, COVID-19">
+          </div>
+          <div class="form-group">
+            <label>ICD 10 Diagnostic Codes</label>
+            <input type="text" id="icd_code" class="form-control" placeholder="e.g. R05.9, Z00.00">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Procedures -->
+      <div class="form-section" id="section-5" data-step="5">
+        <h2 class="section-title"><span>5</span> Procedures</h2>
+        <div class="procedure-grid">
+          <!-- Chest/Abdomen -->
+          <div class="procedure-category">
+            <div class="category-label">Chest / Abdomen</div>
+            <div class="procedure-list">
+              <div class="procedure-item">
+                <label class="checkbox-item"><input type="checkbox"> Chest AP (71045)</label>
+              </div>
+              <div class="procedure-item">
+                <label class="checkbox-item"><input type="checkbox"> Chest AP & Lat (71046)</label>
+              </div>
+              <div class="procedure-item">
+                <label class="checkbox-item"><input type="checkbox"> Abdomen, 1V (74018)</label>
+              </div>
+              <div class="procedure-item">
+                <label class="checkbox-item"><input type="checkbox"> Abdomen, 2V (74019)</label>
+              </div>
+            </div>
+          </div>
+          <!-- Lower Extremity -->
+          <div class="procedure-category">
+            <div class="category-label">Lower Extremity</div>
+            <div class="procedure-list">
+              <div class="procedure-item">
+                <div class="procedure-info"><input type="checkbox"> Hip (73501)</div>
+                <div class="laterality">
+                  <div class="laterality-btn" onclick="toggleLat(this)">L</div>
+                  <div class="laterality-btn" onclick="toggleLat(this)">R</div>
+                </div>
+              </div>
+              <div class="procedure-item">
+                <div class="procedure-info"><input type="checkbox"> Knee (73560)</div>
+                <div class="laterality">
+                  <div class="laterality-btn" onclick="toggleLat(this)">L</div>
+                  <div class="laterality-btn" onclick="toggleLat(this)">R</div>
+                </div>
+              </div>
+              <div class="procedure-item">
+                <div class="procedure-info"><input type="checkbox"> Ankle (73600)</div>
+                <div class="laterality">
+                  <div class="laterality-btn" onclick="toggleLat(this)">L</div>
+                  <div class="laterality-btn" onclick="toggleLat(this)">R</div>
+                </div>
+              </div>
+              <div class="procedure-item">
+                <div class="procedure-info"><input type="checkbox"> Foot (73620)</div>
+                <div class="laterality">
+                  <div class="laterality-btn" onclick="toggleLat(this)">L</div>
+                  <div class="laterality-btn" onclick="toggleLat(this)">R</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Ultrasound / EKG -->
+          <div class="procedure-category">
+            <div class="category-label">Ultrasound & EKG</div>
+            <div class="procedure-list">
+              <div class="procedure-item">
+                <label class="checkbox-item"><input type="checkbox"> US Pelvis (76856)</label>
+              </div>
+              <div class="procedure-item">
+                <label class="checkbox-item"><input type="checkbox"> US Carotid (93880)</label>
+              </div>
+              <div class="procedure-item">
+                <label class="checkbox-item"><input type="checkbox"> EKG (93000)</label>
+              </div>
+              <div class="procedure-item">
+                <label class="checkbox-item"><input type="checkbox"> Echocardiogram (93306)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 6: Upload -->
+      <div class="form-section" id="section-6" data-step="6">
+        <h2 class="section-title"><span>6</span> Supporting Documents</h2>
+        <div class="upload-area" onclick="document.getElementById('file-input').click()">
+          <input type="file" id="file-input" multiple style="display: none;" onchange="updateProgress()">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">Drop files here or click to upload</div>
+          <div class="upload-hint">Upload Face-sheets, IDs, or Physician Orders (PDF, Word, Images)</div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-secondary" onclick="location.href='refined_operations_board.html'">Cancel</button>
+    <button type="submit" form="order-form" class="btn btn-primary">Submit Operational Order</button>
+  </div>
+
+  <div id="toast" class="toast">Order submitted successfully!</div>
+
+  <script>
+    function toggleLat(btn) {
+      btn.classList.toggle('active');
+      updateProgress();
+    }
+
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function updateProgress() {
+      const sections = document.querySelectorAll('.form-section');
+      sections.forEach(section => {
+        const stepId = `step-${section.getAttribute('data-step')}`;
+        const stepEl = document.getElementById(stepId);
+        
+        const inputs = section.querySelectorAll('input:not([type="file"]):not([type="radio"]):not([type="checkbox"]), select, textarea');
+        const radios = section.querySelectorAll('input[type="radio"]');
+        const checks = section.querySelectorAll('input[type="checkbox"]');
+        const fileInput = section.querySelector('input[type="file"]');
+        const lateralities = section.querySelectorAll('.laterality-btn.active');
+
+        let isComplete = false;
+        let inProgress = false;
+
+        // Logic per section
+        const stepNum = section.getAttribute('data-step');
+        if (stepNum === '1') {
+          const required = ['patient_name', 'dob', 'patient_phone'];
+          const filled = required.filter(id => document.getElementById(id).value.trim() !== '');
+          isComplete = filled.length === required.length;
+          inProgress = filled.length > 0;
+        } else if (stepNum === '2') {
+          const vals = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
+          isComplete = vals.length >= 2;
+          inProgress = vals.length > 0;
+        } else if (stepNum === '3') {
+          const radioFilled = Array.from(radios).some(r => r.checked);
+          const inputFilled = Array.from(inputs).some(i => i.value.trim() !== '');
+          isComplete = radioFilled && inputFilled;
+          inProgress = radioFilled || inputFilled;
+        } else if (stepNum === '4') {
+          const vals = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
+          isComplete = vals.length >= 1;
+          inProgress = vals.length > 0;
+        } else if (stepNum === '5') {
+          const anyCheck = Array.from(checks).some(c => c.checked) || lateralities.length > 0;
+          isComplete = anyCheck;
+          inProgress = anyCheck;
+        } else if (stepNum === '6') {
+          isComplete = fileInput.files.length > 0;
+          inProgress = fileInput.files.length > 0;
+        }
+
+        stepEl.classList.toggle('complete', isComplete);
+        stepEl.classList.toggle('active', inProgress && !isComplete);
+      });
+    }
+
+    // Attach listeners
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      el.addEventListener('input', updateProgress);
+      el.addEventListener('change', updateProgress);
+    });
+
+    // Handle scroll for active step highlight
+    window.addEventListener('scroll', () => {
+      const sections = document.querySelectorAll('.form-section');
+      let current = '';
+      sections.forEach(section => {
+        const top = section.offsetTop;
+        if (pageYOffset >= top - 100) {
+          current = section.getAttribute('data-step');
+        }
+      });
+      
+      document.querySelectorAll('.step').forEach(step => {
+        step.classList.remove('active-scroll'); // Add styling if needed
+      });
+    });
+
+    function submitOrder() {
+      showToast('Order created and added to dispatch queue.');
+      setTimeout(() => {
+        location.href = 'refined_operations_board.html';
+      }, 1500);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Initial check
+    updateProgress();
+  </script>
+</body>
+</html>
