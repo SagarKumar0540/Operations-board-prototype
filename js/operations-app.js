@@ -1,3 +1,55 @@
+      const orderFlowConfig = window.ORDER_FLOW_CONFIG || {};
+
+      const STATE_TO_KEY_MAP = {
+        'Order Received': 'ORDER_RECEIVED',
+        'Order Under Review': 'ORDER_UNDER_REVIEW',
+        'Order Complete': 'ORDER_COMPLETE',
+        'Order Incomplete': 'ORDER_INCOMPLETE',
+        'Insurance Verification Required': 'INSURANCE_VERIFICATION_REQUIRED',
+        'Insurance Verified': 'INSURANCE_VERIFIED',
+        'Authorization Required': 'AUTHORIZATION_REQUIRED',
+        'Authorization In Progress': 'AUTHORIZATION_IN_PROGRESS',
+        'Authorization Approved': 'AUTHORIZATION_APPROVED',
+        'Authorization Denied': 'AUTHORIZATION_DENIED',
+        'Patient Contact Initiated': 'PATIENT_CONTACT_INITIATED',
+        'Patient Contacted': 'PATIENT_CONTACTED',
+        'Patient Unreachable': 'PATIENT_UNREACHABLE',
+        'Patient Requested Callback': 'PATIENT_REQUESTED_CALLBACK',
+        'Patient Declined': 'PATIENT_DECLINED',
+        'Patient Confirmed': 'PATIENT_CONFIRMED',
+        'Scheduling Required': 'SCHEDULING_REQUIRED',
+        'Scheduling In Progress': 'SCHEDULING_IN_PROGRESS',
+        'Time Proposed': 'TIME_PROPOSED',
+        'Awaiting Patient Confirmation': 'AWAITING_PATIENT_CONFIRMATION',
+        'Scheduled': 'SCHEDULED',
+        'Rescheduled': 'RESCHEDULED',
+        'Technician Assigned': 'TECHNICIAN_ASSIGNED',
+        'Technician Accepted': 'TECHNICIAN_ACCEPTED',
+        'Technician Declined': 'TECHNICIAN_DECLINED',
+        'Technician Reassigned': 'TECHNICIAN_REASSIGNED',
+        'Awaiting Departure': 'AWAITING_DEPARTURE',
+        'No Movement Detected': 'NO_MOVEMENT_DETECTED',
+        'En Route': 'TECHNICIAN_EN_ROUTE',
+        'Technician En Route': 'TECHNICIAN_EN_ROUTE',
+        'Technician Delayed': 'TECHNICIAN_DELAYED',
+        'Arrived': 'ARRIVED',
+        'Patient Not Ready': 'PATIENT_NOT_READY',
+        'Patient Not Home': 'PATIENT_NOT_HOME',
+        'Address Issue': 'ADDRESS_ISSUE',
+        'Access Issue': 'ACCESS_ISSUE',
+        'Imaging In Progress': 'IMAGING_IN_PROGRESS',
+        'Imaging Completed': 'IMAGING_COMPLETED',
+        'Patient Refused Exam': 'PATIENT_REFUSED_EXAM',
+        'Equipment Issue': 'EQUIPMENT_ISSUE',
+        'Safety Concern': 'SAFETY_CONCERN',
+        'Unable to Complete Exam': 'UNABLE_TO_COMPLETE_EXAM',
+        'Completed': 'VISIT_COMPLETED_SUCCESSFULLY',
+        'Visit Completed Successfully': 'VISIT_COMPLETED_SUCCESSFULLY',
+        'Visit Failed': 'VISIT_FAILED',
+        'Visit Cancelled by Patient': 'VISIT_CANCELLED_PATIENT',
+        'Visit Cancelled — Safety': 'VISIT_CANCELLED_SAFETY'
+      };
+
       setInterval(updateLiveTimes, 15000);
 
       function renderRows() {
@@ -222,11 +274,21 @@
           const container = document.getElementById('next-steps-container');
           const other = document.getElementById('exceptions-container');
           if (other) other.classList.remove('active');
+          
+          const o = orders.find(x => x.id === selectedId);
+          const stateKey = STATE_TO_KEY_MAP[o.state];
+          const config = orderFlowConfig[stateKey];
+
+          if (!config || !config.next_steps || config.next_steps.length === 0) {
+            container.innerHTML = '<div class="sub-step-item" style="opacity:0.5; cursor:default;">No further steps</div>';
+            container.classList.add('active');
+            return;
+          }
+
           container.classList.toggle('active');
-          const steps = [{ text: 'Confirm schedule' }, { text: 'Verify insurance' }, { text: 'Dispatch' }];
-          container.innerHTML = steps.map(s => `
-            <div class="sub-step-item" onclick="showToast('Action selected: ${s.text}')" style="color: var(--blue); border-color: rgba(32, 107, 196, 0.3);">
-              <span>${s.text}</span>
+          container.innerHTML = config.next_steps.map(s => `
+            <div class="sub-step-item" onclick="changeOrderState('${o.id}', '${s.label}')" style="color: var(--blue); border-color: rgba(32, 107, 196, 0.3);">
+              <span>${s.label}</span>
             </div>
           `).join('');
         };
@@ -235,11 +297,21 @@
           const container = document.getElementById('exceptions-container');
           const other = document.getElementById('next-steps-container');
           if (other) other.classList.remove('active');
+
+          const o = orders.find(x => x.id === selectedId);
+          const stateKey = STATE_TO_KEY_MAP[o.state];
+          const config = orderFlowConfig[stateKey];
+
+          if (!config || !config.exceptions || config.exceptions.length === 0) {
+            container.innerHTML = '<div class="sub-step-item" style="opacity:0.5; cursor:default;">No common exceptions</div>';
+            container.classList.add('active');
+            return;
+          }
+
           container.classList.toggle('active');
-          const steps = [{ text: 'No-Show' }, { text: 'Breakdown' }, { text: 'Review' }];
-          container.innerHTML = steps.map(s => `
-            <div class="sub-step-item" onclick="showToast('Exception action: ${s.text}')" style="border-color: rgba(220, 53, 69, 0.3); color: var(--red);">
-              <span>${s.text}</span>
+          container.innerHTML = config.exceptions.map(s => `
+            <div class="sub-step-item" onclick="changeOrderState('${o.id}', '${s.label}')" style="border-color: rgba(220, 53, 69, 0.3); color: var(--red);">
+              <span>${s.label}</span>
             </div>
           `).join('');
         };
