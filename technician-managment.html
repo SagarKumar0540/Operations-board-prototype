@@ -124,7 +124,7 @@
         <tr>
           <th>Technician</th>
           <th>Status</th>
-          <th>Active Orders</th>
+          <th style="text-align: center;">Active Orders</th>
           <th style="text-align: right;">Actions</th>
         </tr>
       </thead>
@@ -207,8 +207,8 @@
               ${t.status === 'Blocked' ? `<span class="reason-text">${t.reason}</span>` : ''}
             </div>
           </td>
-          <td>
-            <div class="tech-info" style="font-weight: 500; color: var(--text);">${t.load}</div>
+          <td style="text-align: center;">
+            <div class="tech-info" style="font-weight: 500; color: var(--text); display: flex; justify-content: center;">${t.load}</div>
           </td>
           <td>
             <div class="actions">
