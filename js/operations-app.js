@@ -270,6 +270,23 @@
           </div>
         ` : '';
 
+        window.handleOrderAction = function(id, action) {
+          if (action.state === 'TECHNICIAN_REASSIGNED' || action.label === 'Reassign Technician') {
+            openReassignModal(id);
+            return;
+          }
+
+          const terminalStates = ['VISIT_COMPLETED_SUCCESSFULLY', 'VISIT_FAILED', 'VISIT_CANCELLED_PATIENT', 'VISIT_CANCELLED_SAFETY'];
+          if (terminalStates.includes(action.state)) {
+            showCartoonModal(`Are you sure you want to mark this visit as ${action.label}?`, () => {
+              changeOrderState(id, action.label);
+            });
+            return;
+          }
+
+          changeOrderState(id, action.label);
+        };
+
         window.showNextSteps = function() {
           const container = document.getElementById('next-steps-container');
           const other = document.getElementById('exceptions-container');
@@ -286,8 +303,9 @@
           }
 
           container.classList.toggle('active');
-          container.innerHTML = config.next_steps.map(s => `
-            <div class="sub-step-item" onclick="changeOrderState('${o.id}', '${s.label}')" style="color: var(--blue); border-color: rgba(32, 107, 196, 0.3);">
+          // Only show top 3 next steps
+          container.innerHTML = config.next_steps.slice(0, 3).map(s => `
+            <div class="sub-step-item" onclick="handleOrderAction('${o.id}', ${JSON.stringify(s).replace(/"/g, '&quot;')})" style="color: var(--blue); border-color: rgba(32, 107, 196, 0.3);">
               <span>${s.label}</span>
             </div>
           `).join('');
@@ -309,8 +327,9 @@
           }
 
           container.classList.toggle('active');
-          container.innerHTML = config.exceptions.map(s => `
-            <div class="sub-step-item" onclick="changeOrderState('${o.id}', '${s.label}')" style="border-color: rgba(220, 53, 69, 0.3); color: var(--red);">
+          // Only show top 3 exceptions
+          container.innerHTML = config.exceptions.slice(0, 3).map(s => `
+            <div class="sub-step-item" onclick="handleOrderAction('${o.id}', ${JSON.stringify(s).replace(/"/g, '&quot;')})" style="border-color: rgba(220, 53, 69, 0.3); color: var(--red);">
               <span>${s.label}</span>
             </div>
           `).join('');
