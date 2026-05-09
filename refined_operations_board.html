@@ -1584,32 +1584,6 @@
       color: var(--text-mute);
     }
 
-    .export-btn {
-      padding: 8px 16px;
-      border: 1px solid var(--green);
-      background: transparent;
-      color: var(--green);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      border-radius: 20px;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
-    }
-
-    .export-btn:hover {
-      background: var(--green);
-      color: #fff;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(25, 135, 84, 0.15);
-    }
-
-    .export-btn:active {
-      transform: translateY(0);
-      box-shadow: none;
-    }
 
     .btn-primary {
       padding: 8px 16px;
@@ -1931,7 +1905,6 @@
         <button class="btn-primary" onclick="location.href='create-order.html'">+ New Order</button>
         <button class="btn-secondary" onclick="location.href='clinic-managment.html'">Clinics</button>
         <button class="btn-secondary" onclick="location.href='technician-managment.html'">Technicians</button>
-        <button class="export-btn" onclick="exportCSV()">↥ Export CSV</button>
       </div>
 
       <div class="filter-bar">
@@ -2628,15 +2601,6 @@
         content.classList.toggle('collapsed'); toggle.classList.toggle('collapsed');
       };
 
-      window.exportCSV = function () {
-        const filtered = getFilteredOrders();
-        if (filtered.length === 0) { showToast('No data to export.'); return; }
-        let csv = 'Patient,Visit ID,State,Technician,Window,Updated,Alert,Priority\n';
-        filtered.forEach(o => csv += `"${o.patient}","${o.id}","${o.state}","${o.tech}","${o.window}","${o.updated}","${o.alert ? 'Yes' : 'No'}","${o.priority}"\n`);
-        const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'zaren_orders.csv'; a.click(); URL.revokeObjectURL(url);
-        showToast('CSV exported successfully.');
-      };
 
       // Filter handling
       window.setFilter = function (btn, filter) {
