@@ -24,32 +24,11 @@
     
     .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; padding-bottom: 80px; }
     
-    .stepper-container { position: sticky; top: 0; z-index: 1000; margin-bottom: 40px; background: #fff; padding: 24px; border-bottom: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-    .stepper { display: flex; justify-content: space-between; align-items: flex-start; position: relative; gap: 20px; max-width: 1000px; margin: 0 auto; }
-    .stepper::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 2px; background: var(--border); z-index: 1; }
-    
-    .step { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; flex: 1; }
-    .step-circle { width: 32px; height: 32px; border-radius: 50%; background: #fff; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; font-weight: 600; margin-bottom: 12px; transition: all 0.3s; color: var(--text-mute); }
-    .step-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-mute); transition: color 0.3s; margin-bottom: 4px; }
-    .step-title { font-size: 12px; font-weight: 400; color: var(--text-dim); transition: color 0.3s; }
-
-    .step.active .step-circle { border-color: var(--blue); background: var(--blue); color: #fff; box-shadow: 0 0 0 4px var(--blue-bg); }
-    .step.active .step-label { color: var(--blue); }
-    .step.active .step-title { color: var(--text); }
-
-    .step.complete .step-circle { border-color: var(--green); background: var(--green); color: #fff; }
-    .step.complete .step-label { color: var(--green); }
-    .step.complete .step-title { color: var(--green); }
-    
-    /* Progress Line logic */
-    .step.complete::after { content: ''; position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background: var(--green); z-index: -1; }
-    .step:last-child.complete::after { display: none; }
-
     .page-header { margin-bottom: 32px; }
     .page-title { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
     .page-subtitle { color: var(--text-mute); margin-top: 4px; }
 
-    .form-section { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 32px; margin-bottom: 24px; scroll-margin-top: 120px; }
+    .form-section { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 32px; margin-bottom: 24px; }
     .section-title { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-mute); margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
     .section-title span { background: var(--blue-bg); color: var(--blue); width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 10px; }
 
@@ -114,40 +93,6 @@
       <p class="page-subtitle">Fill out the detailed imaging request form below.</p>
     </header>
 
-    <div class="stepper-container">
-      <div class="stepper">
-        <div class="step" id="step-1" onclick="scrollToSection('section-1')">
-          <div class="step-circle">1</div>
-          <div class="step-label">Step 01</div>
-          <div class="step-title">Patient Info</div>
-        </div>
-        <div class="step" id="step-2" onclick="scrollToSection('section-2')">
-          <div class="step-circle">2</div>
-          <div class="step-label">Step 02</div>
-          <div class="step-title">Facility Details</div>
-        </div>
-        <div class="step" id="step-3" onclick="scrollToSection('section-3')">
-          <div class="step-circle">3</div>
-          <div class="step-label">Step 03</div>
-          <div class="step-title">Billing & Insurance</div>
-        </div>
-        <div class="step" id="step-4" onclick="scrollToSection('section-4')">
-          <div class="step-circle">4</div>
-          <div class="step-label">Step 04</div>
-          <div class="step-title">Exam Details</div>
-        </div>
-        <div class="step" id="step-5" onclick="scrollToSection('section-5')">
-          <div class="step-circle">5</div>
-          <div class="step-label">Step 05</div>
-          <div class="step-title">Procedures</div>
-        </div>
-        <div class="step" id="step-6" onclick="scrollToSection('section-6')">
-          <div class="step-circle">6</div>
-          <div class="step-label">Step 06</div>
-          <div class="step-title">Documentation</div>
-        </div>
-      </div>
-    </div>
 
     <form id="order-form" onsubmit="event.preventDefault(); submitOrder();">
       <!-- Section 1: Patient Information -->
@@ -345,83 +290,7 @@
   <script>
     function toggleLat(btn) {
       btn.classList.toggle('active');
-      updateProgress();
     }
-
-    function scrollToSection(id) {
-      document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function updateProgress() {
-      const sections = document.querySelectorAll('.form-section');
-      sections.forEach(section => {
-        const stepId = `step-${section.getAttribute('data-step')}`;
-        const stepEl = document.getElementById(stepId);
-        
-        const inputs = section.querySelectorAll('input:not([type="file"]):not([type="radio"]):not([type="checkbox"]), select, textarea');
-        const radios = section.querySelectorAll('input[type="radio"]');
-        const checks = section.querySelectorAll('input[type="checkbox"]');
-        const fileInput = section.querySelector('input[type="file"]');
-        const lateralities = section.querySelectorAll('.laterality-btn.active');
-
-        let isComplete = false;
-        let inProgress = false;
-
-        // Logic per section
-        const stepNum = section.getAttribute('data-step');
-        if (stepNum === '1') {
-          const required = ['patient_name', 'dob', 'patient_phone'];
-          const filled = required.filter(id => document.getElementById(id).value.trim() !== '');
-          isComplete = filled.length === required.length;
-          inProgress = filled.length > 0;
-        } else if (stepNum === '2') {
-          const vals = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
-          isComplete = vals.length >= 2;
-          inProgress = vals.length > 0;
-        } else if (stepNum === '3') {
-          const radioFilled = Array.from(radios).some(r => r.checked);
-          const inputFilled = Array.from(inputs).some(i => i.value.trim() !== '');
-          isComplete = radioFilled && inputFilled;
-          inProgress = radioFilled || inputFilled;
-        } else if (stepNum === '4') {
-          const vals = Array.from(inputs).map(i => i.value.trim()).filter(v => v !== '');
-          isComplete = vals.length >= 1;
-          inProgress = vals.length > 0;
-        } else if (stepNum === '5') {
-          const anyCheck = Array.from(checks).some(c => c.checked) || lateralities.length > 0;
-          isComplete = anyCheck;
-          inProgress = anyCheck;
-        } else if (stepNum === '6') {
-          isComplete = fileInput.files.length > 0;
-          inProgress = fileInput.files.length > 0;
-        }
-
-        stepEl.classList.toggle('complete', isComplete);
-        stepEl.classList.toggle('active', inProgress && !isComplete);
-      });
-    }
-
-    // Attach listeners
-    document.querySelectorAll('input, select, textarea').forEach(el => {
-      el.addEventListener('input', updateProgress);
-      el.addEventListener('change', updateProgress);
-    });
-
-    // Handle scroll for active step highlight
-    window.addEventListener('scroll', () => {
-      const sections = document.querySelectorAll('.form-section');
-      let current = '';
-      sections.forEach(section => {
-        const top = section.offsetTop;
-        if (pageYOffset >= top - 100) {
-          current = section.getAttribute('data-step');
-        }
-      });
-      
-      document.querySelectorAll('.step').forEach(step => {
-        step.classList.remove('active-scroll'); // Add styling if needed
-      });
-    });
 
     function submitOrder() {
       showToast('Order created and added to dispatch queue.');
@@ -436,9 +305,6 @@
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 3000);
     }
-
-    // Initial check
-    updateProgress();
   </script>
 </body>
 </html>
