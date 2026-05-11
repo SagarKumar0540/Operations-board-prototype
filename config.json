@@ -1,0 +1,21 @@
+{
+  "STALE_THRESHOLD": 60,
+  "SLA_TIMINGS": {
+    "urgent": 60,
+    "high": 120,
+    "normal": 240
+  },
+  "STATE_COLOR_MAP": {
+    "Order Received": "gray",
+    "Order Ready": "blue",
+    "Patient Confirmed": "blue",
+    "Scheduled": "gray",
+    "Technician Assigned": "blue",
+    "Awaiting Departure": "yellow",
+    "En Route": "blue",
+    "Arrived": "green",
+    "Completed": "green",
+    "Patient Unreachable": "red",
+    "Cancelled": "red"
+  }
+}

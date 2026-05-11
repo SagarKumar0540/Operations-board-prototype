@@ -1,0 +1,13 @@
+{
+  "name": "operations-board-prototype",
+  "version": "1.0.0",
+  "description": "Zaren Operations Board high-fidelity prototype",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

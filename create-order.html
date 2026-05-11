@@ -81,9 +81,9 @@
 <body>
   <div class="topbar">
     <div class="topbar-left">
-      <a href="refined_operations_board.html" class="logo">ZAREN<span>BOARD</span></a>
-      <div style="width: 1px; height: 20px; background: var(--border2);"></div>
-      <a href="refined_operations_board.html" class="back-link">← Back to Board</a>
+      <a href="index.html" class="logo">ZAREN<span>BOARD</span></a>
+      <div class="divider-v"></div>
+      <a href="index.html" class="back-link">← Back to Board</a>
     </div>
   </div>
 
@@ -281,7 +281,7 @@
   </div>
 
   <div class="form-actions">
-    <button type="button" class="btn btn-secondary" onclick="location.href='refined_operations_board.html'">Cancel</button>
+    <button type="button" class="btn btn-secondary" onclick="location.href='index.html'">Cancel</button>
     <button type="submit" form="order-form" class="btn btn-primary">Submit Order</button>
   </div>
 
@@ -295,7 +295,7 @@
     function submitOrder() {
       showToast('Order created and added to dispatch queue.');
       setTimeout(() => {
-        location.href = 'refined_operations_board.html';
+        location.href = 'index.html';
       }, 1500);
     }
 
