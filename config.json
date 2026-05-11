@@ -16,6 +16,7 @@
     "Arrived": "green",
     "Completed": "green",
     "Patient Unreachable": "red",
+    "Delayed": "red",
     "Cancelled": "red"
   }
 }

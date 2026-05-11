@@ -20,8 +20,7 @@ async function bootstrap() {
         window.EVENT_LISTENERS.init();
 
         // 4. Set Initial State
-        const alertToggle = document.getElementById('activity-toggle');
-        if (alertToggle) alertToggle.classList.add('active');
+        // Keep all panels closed by default as per feedback
 
         console.log('Zaren Operations Board initialized successfully.');
     } catch (error) {
@@ -39,19 +38,22 @@ function mapGlobalActions() {
     };
     window.setFilter = function(btn, filter) {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        if (btn) btn.classList.add('active');
+        
         window.AppState.currentFilter = filter;
         if (filter !== 'technician') {
             window.AppState.currentTechFilter = null;
             const techBtn = document.getElementById('tech-filter-btn');
             if (techBtn) techBtn.classList.remove('active');
         }
+        
         const techDropdown = document.getElementById('tech-dropdown');
         if (filter === 'technician') {
             if (techDropdown) techDropdown.classList.add('active');
         } else {
             if (techDropdown) techDropdown.classList.remove('active');
         }
+        
         window.UI_TABLE.renderRows();
         window.STATE_MANAGER.updateStats();
     };

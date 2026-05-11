@@ -23,9 +23,12 @@ function getFilteredOrders() {
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0); const todayTimestamp = todayStart.getTime();
 
     if (currentFilter === 'delayed') {
-        filtered = filtered.filter(o => o.updatedMins > 30 && o.stateClass !== 'green');
-    } else if (currentFilter === 'stale') {
-        filtered = filtered.filter(o => o.updatedMins >= (window.CONFIG?.STALE_THRESHOLD || 60) && o.stateClass !== 'green');
+        filtered = filtered.filter(o => 
+            o.priority === 'urgent' || 
+            o.stateClass === 'red'
+        );
+    } else if (currentFilter === 'active') {
+        filtered = filtered.filter(o => ['blue', 'yellow'].includes(o.stateClass));
     } else if (currentFilter === 'technician' && currentTechFilter) {
         filtered = filtered.filter(o => o.tech === currentTechFilter);
     } else if (currentFilter === 'date' && currentDateFilter) {
@@ -71,14 +74,15 @@ function getFilteredOrders() {
 }
 
 function updateStats() {
-    const filtered = getFilteredOrders();
-    const staleLimit = window.CONFIG?.STALE_THRESHOLD || 60;
-    const attention = filtered.filter(o => 
-        o.priority === 'urgent' || 
-        (o.updatedMins > 30 && o.stateClass !== 'green') ||
-        (o.updatedMins >= staleLimit && o.stateClass !== 'green')
+    const allOrders = window.DETAILED_ORDERS || [];
+    
+    // Logic must match getFilteredOrders 'delayed' filter
+    const attention = allOrders.filter(o => 
+        o.priority === 'urgent' ||
+        o.stateClass === 'red'
     ).length;
-    const active = filtered.filter(o => ['blue', 'yellow'].includes(o.stateClass)).length;
+    
+    const active = allOrders.filter(o => ['blue', 'yellow'].includes(o.stateClass)).length;
     
     const urgentEl = document.getElementById('stat-urgent');
     const activeEl = document.getElementById('stat-active');

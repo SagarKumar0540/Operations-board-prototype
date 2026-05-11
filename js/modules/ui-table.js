@@ -10,7 +10,6 @@ function renderRows() {
     
     const filtered = window.STATE_MANAGER.getFilteredOrders();
     const { selectedId, selectedCheckboxes, currentSort } = window.AppState;
-    const staleThreshold = window.CONFIG?.STALE_THRESHOLD || 60;
 
     if (filtered.length === 0) {
         tbody.innerHTML = `
@@ -37,12 +36,6 @@ function renderRows() {
             tr.classList.add(`row-state-${sClass}`);
         }
 
-        const isStale = o.updatedMins >= staleThreshold && sClass !== 'green';
-        if (isStale) tr.classList.add('is-stale');
-
-        const stuckHtml = (o.updatedMins > 30 && sClass !== 'green') ? `<span class="stuck-timer">⏱ ${o.updatedMins}m</span>` : '';
-        const staleHtml = isStale ? `<span class="stale-indicator">⏳ STALE</span>` : '';
-
         const checked = selectedCheckboxes.has(o.id) ? 'checked' : '';
         const checkHtml = `<input type="checkbox" ${checked} onclick="event.stopPropagation(); window.UI_TABLE.toggleCheckbox('${o.id}', this.checked)" />`;
 
@@ -59,13 +52,13 @@ function renderRows() {
             <td><span class="priority-indicator"></span><div class="patient-name">${o.patient}</div><div class="visit-id">${o.id}</div></td>
             <td>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="state-badge state-${sClass}"><span class="state-dot"></span>${o.state}</span>${stuckHtml}${staleHtml}
+                    <span class="state-badge state-${sClass}"><span class="state-dot"></span>${o.state}</span>
                 </div>
                 ${reasonHtml}
             </td>
             <td class="tech-cell">${o.tech}</td>
             <td class="time-cell">${new Date(o.createdTs).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-            <td class="updated-cell ${isStale ? 'stale' : ''}"><span class="rel-time" data-ts="${o.lastUpdateTs}">${o.updated}</span></td>
+            <td class="updated-cell"><span class="rel-time" data-ts="${o.lastUpdateTs}">${o.updated}</span></td>
         `;
         tr.onclick = (e) => { if (e.target.tagName === 'INPUT') return; window.UI_DETAIL.openDetail(o.id); };
         tbody.appendChild(tr);

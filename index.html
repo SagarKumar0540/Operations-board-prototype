@@ -27,8 +27,9 @@
     </div>
     <div class="topbar-right">
       <div class="topbar-right-btns">
-        <button class="activity-toggle" id="activity-toggle" onclick="toggleActivityPanel()">
-          <span class="live-dot"></span> Real-Time Alert
+        <button class="activity-toggle-icon" id="activity-toggle" onclick="toggleActivityPanel()" title="Action Center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span class="notification-badge"></span>
         </button>
       </div>
     </div>
@@ -37,14 +38,16 @@
   <div class="main">
     <div class="board-panel">
       <div class="stat-bar">
-        <div class="stat-item">
-          <div class="stat-label">Attention Required</div>
-          <div class="stat-value urgent" id="stat-urgent">1</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">Active Orders</div>
-          <div class="stat-value active" id="stat-active">3</div>
-        </div>
+        <button class="action-tile urgent" id="tile-urgent" onclick="setFilter(null, 'delayed')">
+          <div class="tile-label">Attention Required</div>
+          <div class="tile-value" id="stat-urgent">1</div>
+          <div class="tile-footer">Click to prioritize</div>
+        </button>
+        <button class="action-tile active" id="tile-active" onclick="setFilter(null, 'active')">
+          <div class="tile-label">Active Orders</div>
+          <div class="tile-value" id="stat-active">3</div>
+          <div class="tile-footer">Tracking momentum</div>
+        </button>
       </div>
 
       <div class="search-bar">
@@ -116,7 +119,7 @@
       </div>
     </div>
 
-    <div class="activity-panel" id="activity-panel">
+    <div class="activity-panel hidden" id="activity-panel">
       <div class="activity-header">
         <span class="activity-title">Real-Time Alerts</span>
         <button class="detail-close" onclick="toggleActivityPanel()">✕</button>

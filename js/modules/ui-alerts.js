@@ -13,6 +13,9 @@ function toggleActivityPanel() {
     
     if (!panel.classList.contains('hidden')) {
         renderActivities();
+        // Clear unread badge when opened
+        const badge = toggle.querySelector('.notification-badge');
+        if (badge) badge.style.display = 'none';
     }
 }
 

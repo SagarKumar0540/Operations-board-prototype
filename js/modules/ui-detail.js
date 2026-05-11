@@ -23,28 +23,93 @@ function openDetail(id) {
     const body = document.getElementById('detail-body');
     if (!body) return;
 
+    const situationRoomHeader = renderSituationRoom(o);
     const tlHtml = renderTimeline(o);
     const actionsHtml = renderActions(o);
-    const stalenessWarning = renderStalenessWarning(o);
 
     body.innerHTML = `
+        ${situationRoomHeader}
         <div class="detail-section">
             <div class="section-header" onclick="window.UI_DETAIL.toggleDetailSection(this)">
-                <span class="section-label">Actions</span>
-                <span class="section-toggle">▼</span>
-            </div>
-            <div class="section-content">${stalenessWarning}${actionsHtml}</div>
-        </div>
-        <div class="detail-section">
-            <div class="section-header" onclick="window.UI_DETAIL.toggleDetailSection(this)">
-                <span class="section-label">Time & Timeline</span>
+                <span class="section-label">Encounter Timeline</span>
                 <span class="section-toggle">▼</span>
             </div>
             <div class="section-content"><div class="timeline">${tlHtml}</div></div>
         </div>
+        <div class="detail-section">
+            <div class="section-header" onclick="window.UI_DETAIL.toggleDetailSection(this)">
+                <span class="section-label">Operational Actions</span>
+                <span class="section-toggle">▼</span>
+            </div>
+            <div class="section-content">${actionsHtml}</div>
+        </div>
         ${renderLocationAndPatient(o)}
     `;
     window.EVENT_LISTENERS?.updateLiveTimes();
+}
+
+function renderSituationRoom(o) {
+    const sClass = window.STATE_MANAGER.getStateClass(o.state);
+    const isCompleted = o.stateClass === 'green';
+    
+    // CALIBRATED RISK LOGIC (Purely State & Exception Based)
+    let riskLevel = 'LOW';
+    if (isCompleted) riskLevel = 'NONE';
+    else if (o.stateClass === 'red') riskLevel = 'CRITICAL';
+    else if (o.priority === 'urgent' && !['En Route', 'Arrived', 'Imaging In Progress'].includes(o.state)) riskLevel = 'HIGH';
+    else if (o.priority === 'urgent') riskLevel = 'MEDIUM'; 
+    else if (o.priority === 'high') riskLevel = 'MEDIUM';
+
+    const riskColor = isCompleted ? 'var(--green)' : riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? 'var(--red)' : riskLevel === 'MEDIUM' ? 'var(--yellow)' : 'var(--gray)';
+    
+    // Momentum Logic (State Based)
+    let momentumHtml = '';
+    if (isCompleted) {
+        momentumHtml = `<span class="snap-val" style="color: var(--text-mute)">Finalized</span>`;
+    } else {
+        momentumHtml = `<span class="snap-val active"><span class="momentum-pulse"></span> Moving</span>`;
+    }
+
+    // Confidence Logic
+    const confidenceLabel = isCompleted ? '100% VERIFIED' : 'SYSTEM ESTIMATED';
+
+    // Extract Latest Exception/Reason
+    const latestException = [...o.timeline].reverse().find(t => t.reason)?.reason;
+
+    return `
+        <div class="situation-header" style="border-left: 6px solid ${riskColor};">
+            <div class="situation-identity">
+                <div class="sit-patient">${o.patient}</div>
+                <div class="sit-id mono">${o.id}</div>
+            </div>
+            <div class="situation-top">
+                <div class="situation-main">
+                    <div class="situation-state-label">Current State</div>
+                    <div class="situation-state-val">${o.state}</div>
+                </div>
+                <div class="situation-risk">
+                    <div class="risk-label">Operational Risk</div>
+                    <div class="risk-val" style="color:${riskColor}">${riskLevel}</div>
+                </div>
+            </div>
+            ${latestException && o.stateClass === 'red' ? `
+                <div class="situation-exception">
+                    <div class="exception-label">Exception Context</div>
+                    <div class="exception-val">${latestException}</div>
+                </div>
+            ` : ''}
+            <div class="situation-snapshot">
+                <div class="snapshot-item">
+                    <span class="snap-label">Momentum:</span>
+                    ${momentumHtml}
+                </div>
+                <div class="snapshot-item">
+                    <span class="snap-label">Confidence:</span>
+                    <span class="confidence-badge" style="${isCompleted ? 'border-color: var(--green); color: var(--green);' : ''}">${confidenceLabel}</span>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function closeDetail() {
@@ -75,7 +140,7 @@ function renderTimeline(o) {
                 <div class="tl-left"><div class="tl-dot ${t.status}"></div>${lineHtml}</div>
                 <div class="tl-content">
                     <div class="tl-event ${t.status}">${t.event}</div>
-                    <div class="tl-time">${t.time}</div>
+                    <div class="tl-time mono">${t.time}</div>
                     ${metaHtml}
                 </div>
             </div>`;
@@ -108,28 +173,19 @@ function renderTimeline(o) {
 
 function renderActions(o) {
     return `
-        <div class="action-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <button class="action-btn primary" onclick="window.UI_DETAIL.showNextSteps()">Next Step</button>
-            <button class="action-btn warn" onclick="window.UI_DETAIL.showExceptionActions()">Exceptions</button>
+        <div class="action-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <button class="action-btn-solid" onclick="window.UI_DETAIL.showNextSteps()">Advance Step</button>
+            <button class="action-btn-ghost" onclick="window.UI_DETAIL.showExceptionActions()">Report Exception</button>
         </div>
         <div id="next-steps-container" class="action-sub-steps"></div>
         <div id="exceptions-container" class="action-sub-steps"></div>
-        <div style="height: 1px; background: var(--border2); margin: 12px 0;"></div>
-        <button class="action-btn" style="width: 100%; border: 1px dashed var(--blue); color: var(--blue); opacity: 0.9;" onclick="window.UI_MODALS.openNoteModal('${o.id}')">Add Notes</button>
+        <div style="height: 1px; background: var(--border); margin: 16px 0;"></div>
+        <button class="action-btn-ghost" style="width: 100%;" onclick="window.UI_MODALS.openNoteModal('${o.id}')">Add Operational Note</button>
     `;
 }
 
 function renderStalenessWarning(o) {
-    const isStale = o.updatedMins >= (window.CONFIG?.STALE_THRESHOLD || 60) && o.stateClass !== 'green';
-    if (!isStale) return '';
-    return `
-        <div style="background:var(--orange-bg); border:1px solid var(--orange); padding:10px; border-radius:4px; margin-bottom:12px; display:flex; gap:10px; align-items:center;">
-            <div style="font-size:20px;">⏳</div>
-            <div>
-                <div style="font-weight:600; color:var(--orange); font-size:12px; text-transform:uppercase;">Information Staleness Risk</div>
-                <div style="font-size:11px; color:var(--text-dim);">No update for ${o.updatedMins}m. High operational uncertainty. Recommend contacting technician.</div>
-            </div>
-        </div>`;
+    return ''; // Deprecated, now in Situation Room header
 }
 
 function renderLocationAndPatient(o) {
