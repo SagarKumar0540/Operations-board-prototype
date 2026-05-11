@@ -115,12 +115,8 @@ function renderSituationRoom(o) {
 function closeDetail() {
     window.AppState.selectedId = null;
     const detailPanel = document.getElementById('detail-panel');
-    const alertPanel = document.getElementById('activity-panel');
-    const alertToggle = document.getElementById('activity-toggle');
     
     if (detailPanel) detailPanel.classList.add('hidden');
-    if (alertPanel) alertPanel.classList.remove('hidden');
-    if (alertToggle) alertToggle.classList.add('active');
     
     window.UI_TABLE.renderRows();
     window.UI_ALERTS?.renderActivities();
